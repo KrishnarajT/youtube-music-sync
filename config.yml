@@ -1,0 +1,53 @@
+# YouTube Playlist Downloader Configuration
+
+# Operating System: "windows" or "linux"
+# This helps the script handle path separators and executables correctly
+os_type: "windows"  # Options: "windows" or "linux"
+
+# Input method: Choose either 'channel', 'playlist_urls', or 'playlist_file'
+input_method: "playlist_file"  # Options: "channel", "playlist_urls", or "playlist_file"
+
+# For channel method: YouTube channel URL
+# (e.g., https://www.youtube.com/@channelname or https://www.youtube.com/c/channelname)
+# Note: This works for regular YouTube channels but NOT YouTube Music channels
+channel_url: "https://music.youtube.com/@KrishnarajThadesar-ud9ji"
+
+# For playlist_urls method: List of direct playlist URLs
+# Can be from YouTube, YouTube Music, or mix of both
+playlist_urls:
+  - "https://music.youtube.com/playlist?list=PLUvscRyjXlgswZZ3SzDszFiGNxTFypb0t"
+  - "https://www.youtube.com/playlist?list=ANOTHER_PLAYLIST_ID"
+  # Add more playlist URLs here
+
+# For playlist_file method: Path to a text file containing playlist URLs (one per line)
+# This is useful if you have many playlists - just paste all URLs into a text file
+# The script will automatically extract playlist IDs from any YouTube/YouTube Music URLs
+playlist_file: "playlists.txt"
+
+# Root directory where playlists will be downloaded
+# Each playlist will be saved in a subdirectory named after the playlist
+# Windows example: "C:/Music/YouTube" or "C:\\Music\\YouTube"
+# Linux example: "/home/user/Music/YouTube" or "~/Music/YouTube"
+root_path: "C:\\Users\\Krishnaraj\\Downloads\\testing_youtube_music_downloader"
+
+# Path to yt-dlp executable
+# Windows example: "C:/Tools/yt-dlp.exe" or just "yt-dlp" if in PATH
+# Linux example: "/usr/local/bin/yt-dlp" or just "yt-dlp" if in PATH
+ytdlp_path: "C:\\Users\\Krishnaraj\\Downloads\\testing_youtube_music_downloader\\yt-dlp.exe"
+
+# Path to ffmpeg executable (required for audio conversion)
+# Windows example: "C:/Tools/ffmpeg.exe" or just "ffmpeg" if in PATH
+# Linux example: "/usr/bin/ffmpeg" or just "ffmpeg" if in PATH
+ffmpeg_path: "C:/Tools/ffmpeg.exe"
+
+# Audio format for downloaded files
+# Options: "auto" (best available), "mp3", "flac", "wav", "m4a", "opus", "vorbis", "aac"
+audio_format: "auto"
+
+# Audio quality (only applies when audio_format is not "auto")
+# For MP3: 0 (best) to 9 (worst), or bitrate like "320K"
+# For other formats: 0 (best) to 10 (worst)
+audio_quality: "0"
+
+# Optional: Additional yt-dlp arguments (advanced users)
+# extra_args: "--embed-thumbnail --add-metadata"
