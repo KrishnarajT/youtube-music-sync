@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: youtube-music-sync
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: youtube-music-sync
+  template:
+    metadata:
+      annotations:
+        secret.reloader.stakater.com/reload: "fastapi-secrets"
+      labels:
+        app: youtube-music-sync
+    spec:
+      containers:
+      - name: youtube-music-sync
+        image: ghcr.io/krishnarajt/youtube-music-sync:latest
+        imagePullPolicy: Always
+        env:
+        - name: MY_ENV_VAR
+          valueFrom:
+            secretKeyRef:
+              name: fastapi-secrets
+              key: MY_ENV_VAR
+        ports:
+        - containerPort: 8000
