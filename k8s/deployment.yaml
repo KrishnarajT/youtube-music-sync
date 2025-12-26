@@ -19,10 +19,10 @@ spec:
         image: ghcr.io/krishnarajt/youtube-music-sync:latest
         imagePullPolicy: Always
         env:
-        - name: MY_ENV_VAR
-          valueFrom:
-            secretKeyRef:
-              name: youtube-music-sync-secrets
-              key: MY_ENV_VAR
+        # - name: MY_ENV_VAR
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: youtube-music-sync-secrets
+        #       key: MY_ENV_VAR
         ports:
         - containerPort: 8000
