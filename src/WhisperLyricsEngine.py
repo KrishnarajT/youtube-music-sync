@@ -15,10 +15,8 @@ class WhisperLyricsEngine:
     def __init__(
         self,
         model_size: str = "small",
-        language: str = "en",
         compute_type: str = "int8",
     ):
-        self.language = language
         self.model = WhisperModel(
             model_size,
             device="cpu",
@@ -69,9 +67,6 @@ class WhisperLyricsEngine:
                 )
 
     def generate_lrc(self, audio_path: Path) -> Optional[Path]:
-        """
-        Run Whisper on the given audio file and return path to .lrc if successful.
-        """
         if not audio_path.exists():
             return None
 
@@ -79,12 +74,26 @@ class WhisperLyricsEngine:
         vtt_path = audio_path.with_suffix(".vtt")
         lrc_path = audio_path.with_suffix(".lrc")
 
-        segments, _ = self.model.transcribe(
-            str(wav_path),
-            language=self.language,
-        )
+        try:
+            segments, info = self.model.transcribe(
+                str(wav_path),
+                task="transcribe",
+                language=None,  # auto-detect
+            )
 
-        self._write_vtt(segments, vtt_path)
-        vtt_to_lrc(vtt_path, lrc_path)
+            # 🔑 Only override Urdu
+            if info.language == "ur":
+                segments, info = self.model.transcribe(
+                    str(wav_path),
+                    task="transcribe",
+                    language="hi",
+                )
 
-        return lrc_path
+            self._write_vtt(segments, vtt_path)
+            vtt_to_lrc(vtt_path, lrc_path)
+
+            return lrc_path
+
+        finally:
+            if wav_path.exists():
+                wav_path.unlink()
