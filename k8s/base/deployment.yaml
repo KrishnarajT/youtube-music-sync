@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: ghcr.io/krishnarajt/youtube-music-sync:git-bootstrap
+          image: ghcr.io/krishnarajt/youtube-music-sync:git-ff71779c686e105318866459a5a50cbe1b00f152
           imagePullPolicy: IfNotPresent
 
           command: ["python", "dashboard.py"]
