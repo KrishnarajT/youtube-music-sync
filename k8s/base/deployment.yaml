@@ -18,14 +18,10 @@ spec:
           imagePullPolicy: IfNotPresent
 
           command: ["streamlit", "run", "dashboard.py"]
-
-          env:
-            - name: PYTHONUNBUFFERED
-              value: "1"
-            - name: APP_CONFIG_PATH
-              value: /app/config.yml
-            - name: PLAYLISTS_FILE
-              value: /app/playlists.txt
+          
+          envFrom:
+            - secretRef:
+                name: youtube-music-sync-env
 
           volumeMounts:
             - name: app-config
