@@ -11,7 +11,7 @@ resources:
 configMapGenerator:
   - name: youtube-music-sync-config
     files:
-      - config.yml=../config.yml
+      - config.yml
 
 # This ensures that if the config changes, 
 # the Deployment gets a new hash and restarts automatically.
