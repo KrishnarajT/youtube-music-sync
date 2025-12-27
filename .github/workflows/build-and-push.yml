@@ -9,7 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write  # This is the required permission
+      packages: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,4 +31,4 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/youtube-music-sync:latest
+            ghcr.io/${{ github.repository_owner }}/youtube-music-sync:git-${{ github.sha }}

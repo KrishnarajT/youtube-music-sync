@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: krishnarajt/youtube-music-sync:latest
+          image: ghcr.io/krishnarajt/youtube-music-sync:git-<commit-sha>
           imagePullPolicy: IfNotPresent
 
           command: ["python", "dashboard.py"]
