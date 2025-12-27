@@ -136,7 +136,7 @@ def main():
         if st.button("🚀 Sync All Pending", use_container_width=True, type="primary"):
             st.session_state.sync_all = True
 
-        if st.button("🗑️ Clear Metadata Cache", use_container_width=True):
+        if st.button("🗑️ Clear Download State", use_container_width=True):
             if os.path.exists("download_state.json"):
                 os.remove("download_state.json")
                 st.toast("Cache cleared! Reloading...")

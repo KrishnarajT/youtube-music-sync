@@ -9,20 +9,39 @@ spec:
       app: youtube-music-sync
   template:
     metadata:
-      annotations:
-        secret.reloader.stakater.com/reload: "youtube-music-sync-secrets"
       labels:
         app: youtube-music-sync
     spec:
       containers:
-      - name: youtube-music-sync
-        image: ghcr.io/krishnarajt/youtube-music-sync:latest
-        imagePullPolicy: Always
-        env:
-        # - name: MY_ENV_VAR
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: youtube-music-sync-secrets
-        #       key: MY_ENV_VAR
-        ports:
-        - containerPort: 8000
+        - name: app
+          image: krishnarajt/youtube-music-sync:latest
+          imagePullPolicy: IfNotPresent
+
+          command: ["python", "dashboard.py"]
+
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: APP_CONFIG_PATH
+              value: /app/config.yml
+            - name: PLAYLISTS_FILE
+              value: /app/playlists.txt
+
+          volumeMounts:
+            - name: app-config
+              mountPath: /app/config.yml
+              subPath: config.yml
+
+            - name: playlists-config
+              mountPath: /app/playlists.txt
+              subPath: playlists.txt
+
+
+      volumes:
+        - name: app-config
+          configMap:
+            name: app-config
+
+        - name: playlists-config
+          configMap:
+            name: playlists-config

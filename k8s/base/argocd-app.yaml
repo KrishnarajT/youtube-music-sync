@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/krishnarajt/youtube-music-sync
     targetRevision: main
-    path: k8s
+    path: k8s/overlays/linux
   destination:
     server: https://kubernetes.default.svc
     namespace: youtube-music-sync

@@ -1,0 +1,11 @@
+os_type: "linux"
+
+ytdlp_path: "yt-dlp"
+
+ffmpeg_path: "ffmpeg"
+
+root_path: "./music/test"
+
+input_method: "playlist_file"
+
+playlist_file: "playlists.txt"
