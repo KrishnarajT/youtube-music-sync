@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: ghcr.io/krishnarajt/youtube-music-sync:git-ffde51c420d6fe28c91ae3a99f89b77e788f9e87
+          image: ghcr.io/krishnarajt/youtube-music-sync:git-967704e88119d1280d0cf4ce97322a37b9d160f1
           imagePullPolicy: IfNotPresent
 
           command: ["streamlit", "run", "dashboard.py"]
