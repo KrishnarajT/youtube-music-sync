@@ -1,19 +1,19 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# This tells Kustomize to include your deployment
+# Point to the directory containing your K8s manifests
 resources:
-  - deployment.yaml
+  - k8s/deployment.yaml
+  - k8s/service.yaml
 
-# This is the "No-Paste" magic. 
-# It creates a ConfigMap named 'youtube-music-sync-config' 
-# using the actual content of the file at the root of your repo.
+# This generates a ConfigMap from your local files.
+# No more copy-pasting content into YAML!
 configMapGenerator:
   - name: youtube-music-sync-config
     files:
       - config.yml
+      - playlists.txt
 
-# This ensures that if the config changes, 
-# the Deployment gets a new hash and restarts automatically.
+# Ensures the deployment rolls when the config or playlists change
 generatorOptions:
   disableNameSuffixHash: false
