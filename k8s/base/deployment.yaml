@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: ghcr.io/krishnarajt/youtube-music-sync:git-90a5777e1e2e51a60a00f372ca33338fb85c6e19
+          image: ghcr.io/krishnarajt/youtube-music-sync:git-ea50041b551f36861d6dee55b5813aa0f322e8a1
           imagePullPolicy: IfNotPresent
           command: ["python", "main.py"]
 
@@ -38,7 +38,7 @@ spec:
         # Streamlit dashboard container
         # -----------------------------
         - name: dashboard
-          image: ghcr.io/krishnarajt/youtube-music-sync:git-a4d22d058dd20e224e144fc0fec90920a17eee43
+          image: ghcr.io/krishnarajt/youtube-music-sync:git-ea50041b551f36861d6dee55b5813aa0f322e8a1
           imagePullPolicy: IfNotPresent
           command: ["streamlit", "run", "dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
 
