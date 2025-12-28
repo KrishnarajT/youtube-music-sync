@@ -6,6 +6,8 @@ ffmpeg_path: "ffmpeg"
 
 root_path: "/music/test"
 
-input_method: "playlist_file"
+input_method: "channel"
+
+channel_url: "https://music.youtube.com/@KrishnarajThadesar-ud9ji"
 
 playlist_file: "/app/playlists.txt"
