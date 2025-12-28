@@ -33,6 +33,9 @@ spec:
             - name: playlists-config
               mountPath: /app/playlists.txt
               subPath: playlists.txt
+            
+            - name: music
+              mountPath: /music
 
         # -----------------------------
         # Streamlit dashboard container
@@ -61,6 +64,8 @@ spec:
               mountPath: /app/playlists.txt
               subPath: playlists.txt
 
+            - name: music
+              mountPath: /music
 
       volumes:
         - name: downloads
@@ -74,3 +79,8 @@ spec:
         - name: playlists-config
           configMap:
             name: playlists-config
+
+        - name: music
+          hostPath:
+            path: /music
+            type: Directory
