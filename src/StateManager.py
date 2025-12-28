@@ -17,6 +17,7 @@ class StateManager:
             "completed_playlists": [],
             "partially_downloaded": {},
             "playlist_info": {},
+            "channel_info": {},
         }
         if not self.file_path.exists():
             logger.info(f"State file {self.file_path} not found, using default state")
@@ -25,7 +26,11 @@ class StateManager:
             with open(self.file_path, "r", encoding="utf-8") as f:
                 content = f.read().strip()
                 logger.info(f"Loaded state from {self.file_path}")
-                return json.loads(content) if content else default_state
+                loaded_state = json.loads(content) if content else default_state
+                # Ensure channel_info exists in loaded state
+                if "channel_info" not in loaded_state:
+                    loaded_state["channel_info"] = {}
+                return loaded_state
         except (json.JSONDecodeError, ValueError):
             logger.warning(
                 f"State file {self.file_path} is corrupted, using default state"
@@ -57,3 +62,28 @@ class StateManager:
             self.state["playlist_info"] = {}
         self.state["playlist_info"][str(playlist_id)] = info
         self.save()
+
+    def cache_channel_info(self, channel_info):
+        """Cache channel metadata."""
+        self.state["channel_info"] = channel_info
+        self.save()
+        logger.info(
+            f"Cached channel info for: {channel_info.get('channel', 'Unknown')}"
+        )
+
+    def get_channel_info(self):
+        """Get cached channel information."""
+        return self.state.get("channel_info", {})
+
+    def get_all_playlists(self):
+        """Get all cached playlist information."""
+        return self.state.get("playlist_info", {})
+
+    def get_stats(self):
+        """Get statistics about cached data."""
+        return {
+            "total_playlists": len(self.state.get("playlist_info", {})),
+            "completed_playlists": len(self.state.get("completed_playlists", [])),
+            "partial_downloads": len(self.state.get("partially_downloaded", {})),
+            "channel_cached": bool(self.state.get("channel_info", {})),
+        }

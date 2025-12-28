@@ -81,42 +81,77 @@ class PlaylistResolver:
             return info
 
     def from_channel(self):
+        """Fetch all playlists from a channel using yt-dlp."""
         logger.info("Fetching playlists from channel...")
-        playlists = []
-        urls_to_try = [f"{self.config.channel_url}/playlists", self.config.channel_url]
 
-        for url in urls_to_try:
-            cmd = [self.config.ytdlp_path, "--flat-playlist", "--dump-json", url]
-            try:
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                    check=True,
-                )
-                for line in result.stdout.strip().split("\n"):
-                    if not line:
-                        continue
-                    data = json.loads(line)
-                    if data.get("_type") == "playlist":
-                        playlists.append(
-                            {
-                                "id": data["id"],
-                                "title": data["title"],
-                                "url": data["url"],
-                            }
-                        )
-                if playlists:
-                    logger.info(f"Found {len(playlists)} playlists from channel")
-                    break
-            except subprocess.CalledProcessError as e:
-                logger.warning(f"Failed to fetch from {url}: {e}")
-                continue
-            except Exception as e:
-                logger.error(f"Error processing channel {url}: {e}")
-                continue
-        return playlists
+        # Try the /playlists URL first
+        url = f"{self.config.channel_url}/playlists"
+        cmd = [self.config.ytdlp_path, "-J", "--flat-playlist", url]
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                check=True,
+            )
+
+            data = json.loads(result.stdout)
+
+            # Store channel metadata
+            channel_info = {
+                "channel_id": data.get("channel_id"),
+                "channel": data.get("channel"),
+                "uploader": data.get("uploader"),
+                "uploader_id": data.get("uploader_id"),
+                "uploader_url": data.get("uploader_url"),
+                "channel_url": data.get("channel_url"),
+                "playlist_count": data.get("playlist_count", 0),
+            }
+            self.state.cache_channel_info(channel_info)
+            logger.info(
+                f"Found {channel_info['playlist_count']} playlists from channel: {channel_info['channel']}"
+            )
+
+            # Extract playlist entries
+            playlists = []
+            entries = data.get("entries", [])
+
+            for entry in tqdm(entries, desc="Processing playlists", unit="playlist"):
+                playlist_id = entry.get("id")
+                if not playlist_id:
+                    continue
+
+                playlist_info = {
+                    "id": str(playlist_id),
+                    "title": entry.get("title", f"Playlist_{playlist_id}"),
+                    "url": entry.get(
+                        "url", f"https://music.youtube.com/playlist?list={playlist_id}"
+                    ),
+                    "thumbnails": entry.get("thumbnails", []),
+                    "ie_key": entry.get("ie_key"),
+                }
+
+                # Cache the info
+                self.state.cache_info(playlist_id, playlist_info)
+                playlists.append(playlist_info)
+
+            logger.info(
+                f"Successfully processed {len(playlists)} playlists from channel"
+            )
+            return playlists
+
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to fetch playlists from channel: {e}")
+            logger.error(f"stderr: {e.stderr if hasattr(e, 'stderr') else 'N/A'}")
+            return []
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON response: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error processing channel: {e}")
+            return []
 
     def from_file(self):
         file_path = self.config.playlist_file

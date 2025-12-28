@@ -3,6 +3,7 @@ from src.logging_utils import get_logger
 import subprocess
 import re
 import os
+import requests
 from pathlib import Path
 from utils.vtt_to_lrc import vtt_to_lrc
 
@@ -22,6 +23,71 @@ class DownloadEngine:
         regex = r'[<>:"/\\|?*]' if self.config.os_type == "windows" else r"[/\0]"
         cleaned = re.sub(regex, "", name).strip(". ")
         return cleaned[:200]
+
+    def download_cover_image(self, playlist_info: dict, dest_dir: Path) -> bool:
+        """
+        Download the playlist cover image from thumbnails and save it as 'cover.jpg' or 'cover.png'.
+        Returns True if successful, False otherwise.
+        """
+        thumbnails = playlist_info.get("thumbnails", [])
+
+        if not thumbnails:
+            logger.warning(
+                f"No thumbnails found for playlist: {playlist_info.get('title', 'Unknown')}"
+            )
+            return False
+
+        # Sort thumbnails by resolution (highest first) and get the best quality
+        sorted_thumbnails = sorted(
+            thumbnails,
+            key=lambda t: (t.get("height", 0) * t.get("width", 0)),
+            reverse=True,
+        )
+
+        for thumbnail in sorted_thumbnails:
+            url = thumbnail.get("url")
+            if not url:
+                continue
+
+            try:
+                logger.info(f"Downloading cover image from: {url}")
+                response = requests.get(url, timeout=30, stream=True)
+                response.raise_for_status()
+
+                # Determine file extension from content-type or URL
+                content_type = response.headers.get("content-type", "")
+                if (
+                    "jpeg" in content_type
+                    or "jpg" in content_type
+                    or url.endswith((".jpg", ".jpeg"))
+                ):
+                    ext = "jpg"
+                elif "png" in content_type or url.endswith(".png"):
+                    ext = "png"
+                elif "webp" in content_type or url.endswith(".webp"):
+                    ext = "webp"
+                else:
+                    ext = "jpg"  # Default to jpg
+
+                cover_path = dest_dir / f"cover.{ext}"
+
+                # Download and save the image
+                with open(cover_path, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+                logger.info(f"Successfully saved cover image: {cover_path.name}")
+                return True
+
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Failed to download thumbnail from {url}: {e}")
+                continue
+            except Exception as e:
+                logger.error(f"Error saving cover image: {e}")
+                continue
+
+        logger.warning("Failed to download any cover image")
+        return False
 
     def convert_opus_to_mp3(self, dest_dir: Path) -> None:
         """
@@ -73,6 +139,10 @@ class DownloadEngine:
         clean_title = self.clean_filename(playlist_info["title"])
         dest_dir = self.config.root_path / clean_title
         dest_dir.mkdir(parents=True, exist_ok=True)
+
+        # Download cover image first
+        logger.info(f"Downloading cover image for playlist: {clean_title}")
+        self.download_cover_image(playlist_info, dest_dir)
 
         archive_file = "download_archive.txt"
 
