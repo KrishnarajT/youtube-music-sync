@@ -40,7 +40,16 @@ spec:
         - name: dashboard
           image: ghcr.io/krishnarajt/youtube-music-sync:git-65b6218e7459dd3237d60d83d5a591d2e8bce5ad
           imagePullPolicy: IfNotPresent
-          command: ["streamlit", "run", "dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+          command:
+            [
+              "streamlit",
+              "run",
+              "dashboard.py",
+              "--server.port=8501",
+              "--server.address=0.0.0.0",
+              "--logger.level=info"
+            ]
+
 
           envFrom:
             - secretRef:
