@@ -23,6 +23,48 @@ class DownloadEngine:
         cleaned = re.sub(regex, "", name).strip(". ")
         return cleaned[:200]
 
+    def convert_opus_to_mp3(self, dest_dir: Path) -> None:
+        """
+        Convert all .opus files to .mp3 using ffmpeg and delete the original opus files.
+        """
+        opus_files = list(dest_dir.glob("*.opus"))
+        if not opus_files:
+            logger.debug("No opus files found to convert")
+            return
+
+        logger.info(f"Converting {len(opus_files)} opus file(s) to mp3...")
+
+        for opus_file in opus_files:
+            mp3_file = opus_file.with_suffix(".mp3")
+
+            try:
+                logger.debug(f"Converting: {opus_file.name} → {mp3_file.name}")
+
+                subprocess.run(
+                    [
+                        "ffmpeg",
+                        "-i",
+                        str(opus_file),
+                        "-codec:a",
+                        "libmp3lame",
+                        "-q:a",
+                        "2",  # Quality: 2 is high quality (~192kbps)
+                        str(mp3_file),
+                    ],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=True,
+                )
+
+                # Delete the original opus file
+                opus_file.unlink()
+                logger.info(f"Converted and deleted: {opus_file.name}")
+
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Failed to convert {opus_file.name} to mp3: {e}")
+            except Exception as e:
+                logger.error(f"Error during conversion of {opus_file.name}: {e}")
+
     def download(self, playlist_info: dict) -> bool:
         """
         Executes the yt-dlp download process for a given playlist.
@@ -161,8 +203,11 @@ class DownloadEngine:
                     logger.error("Captured Error Messages:")
                     for err in error_logs[-5:]:
                         logger.error(f"  {err}")
-                logger.error("Check the URL or your network connection.")
-                return False
+                    logger.error("Check the URL or your network connection.")
+                    return False
+
+            # ---- Post-process: Convert OPUS to MP3 ----
+            self.convert_opus_to_mp3(dest_dir)
 
             # ---- Post-process: VTT → LRC ----
             if getattr(self.config, "download_lyrics", False):

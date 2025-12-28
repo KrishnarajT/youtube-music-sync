@@ -1,6 +1,7 @@
 import sys
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 from src.ConfigManager import ConfigManager
 from src.StateManager import StateManager
 from src.PlaylistResolver import PlaylistResolver
@@ -33,6 +34,25 @@ class YouTubeApp:
         except Exception as e:
             logger.error(f"Failed to initialize components: {e}", exc_info=True)
             sys.exit(1)
+
+    def run_album_naming(self) -> None:
+        """
+        Executes name_album_from_folders.py on the root download directory.
+        This automatically tags all MP3 files with proper album/artist metadata.
+        """
+        try:
+            from name_album_from_folders import NameAlbumFromFolders
+
+            logger.info(f"Running album naming on: {self.config.root_path}")
+            namer = NameAlbumFromFolders(self.config.root_path)
+            namer.run()
+            logger.info("Album naming completed")
+        except ImportError:
+            logger.warning(
+                "name_album_from_folders module not found; skipping album naming"
+            )
+        except Exception as e:
+            logger.error(f"Album naming failed: {e}", exc_info=True)
 
     def perform_sync(self):
         """Single sync pass logic."""
@@ -77,7 +97,7 @@ class YouTubeApp:
                     playlist_dir = self.config.root_path / self.engine.clean_filename(
                         p["title"]
                     )
-                    for audio_file in playlist_dir.glob("*.opus"):
+                    for audio_file in playlist_dir.glob("*.mp3"):
                         lrc_file = audio_file.with_suffix(".lrc")
                         if not lrc_file.exists():
                             try:
@@ -101,6 +121,11 @@ class YouTubeApp:
         logger.info(
             f"Sync Cycle Finished! Successful/Up-to-date: {success_count}, Failed: {fail_count}"
         )
+
+        # Run album naming script on all downloaded files
+        logger.info("Starting album naming process...")
+        self.run_album_naming()
+        logger.info("Album naming process completed")
 
     def run_forever(self):
         """Runs the sync every 12 hours."""

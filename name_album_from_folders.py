@@ -2,9 +2,22 @@ import os
 import unicodedata
 from pathlib import Path
 from mutagen.id3 import (
-    ID3, ID3NoHeaderError,
-    TALB, TPE1, TPE2, TIT2, TRCK, TPOS, TCON, TDRC, TSOA, APIC
+    ID3,
+    ID3NoHeaderError,
+    TALB,
+    TPE1,
+    TPE2,
+    TIT2,
+    TRCK,
+    TPOS,
+    TCON,
+    TDRC,
+    TSOA,
+    APIC,
 )
+from src.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 # ------------------------
 # CONFIGURATION
@@ -62,17 +75,19 @@ def wipe_tags(filepath: str):
         pass
 
 
-def write_clean_tags(filepath: str, album: str, title: str, track_num: int, artist: str, covers):
+def write_clean_tags(
+    filepath: str, album: str, title: str, track_num: int, artist: str, covers
+):
     """Write clean ID3 tags."""
     audio = ID3()
 
-    audio.add(TALB(encoding=3, text=album))                    # Album
-    audio.add(TPE2(encoding=3, text=ALBUM_ARTIST_DEFAULT))     # Album Artist (grouping)
-    audio.add(TPE1(encoding=3, text=artist))                   # Track Artist (preserved)
-    audio.add(TIT2(encoding=3, text=title))                    # Title
-    audio.add(TRCK(encoding=3, text=str(track_num)))           # Sequential Track Numbers
-    audio.add(TPOS(encoding=3, text="1"))                      # Disc #
-    audio.add(TSOA(encoding=3, text=album))                    # Album Sort
+    audio.add(TALB(encoding=3, text=album))  # Album
+    audio.add(TPE2(encoding=3, text=ALBUM_ARTIST_DEFAULT))  # Album Artist (grouping)
+    audio.add(TPE1(encoding=3, text=artist))  # Track Artist (preserved)
+    audio.add(TIT2(encoding=3, text=title))  # Title
+    audio.add(TRCK(encoding=3, text=str(track_num)))  # Sequential Track Numbers
+    audio.add(TPOS(encoding=3, text="1"))  # Disc #
+    audio.add(TSOA(encoding=3, text=album))  # Album Sort
 
     if GENRE_DEFAULT:
         audio.add(TCON(encoding=3, text=GENRE_DEFAULT))
@@ -81,48 +96,68 @@ def write_clean_tags(filepath: str, album: str, title: str, track_num: int, arti
         audio.add(TDRC(encoding=3, text=YEAR_DEFAULT))
 
     for cover in covers:
-        audio.add(APIC(
-            encoding=cover.encoding,
-            mime=cover.mime,
-            type=cover.type,
-            desc=cover.desc,
-            data=cover.data
-        ))
+        audio.add(
+            APIC(
+                encoding=cover.encoding,
+                mime=cover.mime,
+                type=cover.type,
+                desc=cover.desc,
+                data=cover.data,
+            )
+        )
 
     audio.save(filepath)
 
 
 # ------------------------
-# MAIN SCRIPT
+# NameAlbumFromFolders class
 # ------------------------
-base_folder = input("Enter the full path to your music root folder: ").strip()
 
-if not os.path.isdir(base_folder):
-    print("Invalid folder path.")
-    exit(1)
 
-for root, dirs, files in os.walk(base_folder):
-    mp3s = sorted([f for f in files if f.lower().endswith(".mp3")])
+class NameAlbumFromFolders:
+    """Process folders under a root path and normalize MP3 ID3 tags.
 
-    if not mp3s:
-        continue
+    Usage:
+        namer = NameAlbumFromFolders(root_path)
+        namer.run()
+    """
 
-    album_name = normalize(os.path.basename(root))
-    print(f"\n=== Processing Album Folder: {album_name} ===")
+    def __init__(self, root_path):
+        self.root_path = Path(root_path)
 
-    # Alphabetically ordered MP3 list = track order
-    for index, mp3_file in enumerate(mp3s, start=1):
-        full_path = os.path.join(root, mp3_file)
-        print(f"→ Track {index}: {mp3_file}")
+    def run(self):
+        if not self.root_path.exists() or not self.root_path.is_dir():
+            logger.error(f"Invalid folder path: {self.root_path}")
+            return
 
-        # Extract track metadata to preserve
-        artist, covers = read_existing_artist_and_cover(full_path)
-        title = clean_title(mp3_file)
+        for root, dirs, files in os.walk(self.root_path):
+            mp3s = sorted([f for f in files if f.lower().endswith(".mp3")])
 
-        # Remove all existing tags
-        wipe_tags(full_path)
+            if not mp3s:
+                continue
 
-        # Write normalized tags with new track # (alphabetical)
-        write_clean_tags(full_path, album_name, title, index, artist, covers)
+            album_name = normalize(os.path.basename(root))
+            logger.info(f"Processing Album Folder: {album_name}")
 
-print("\nAll albums processed successfully with alphabetic track ordering.")
+            # Alphabetically ordered MP3 list = track order
+            for index, mp3_file in enumerate(mp3s, start=1):
+                full_path = os.path.join(root, mp3_file)
+                logger.info(f"Track {index}: {mp3_file}")
+
+                # Extract track metadata to preserve
+                artist, covers = read_existing_artist_and_cover(full_path)
+                title = clean_title(mp3_file)
+
+                # Remove all existing tags
+                wipe_tags(full_path)
+
+                # Write normalized tags with new track # (alphabetical)
+                write_clean_tags(full_path, album_name, title, index, artist, covers)
+
+        logger.info("All albums processed successfully with alphabetic track ordering.")
+
+
+if __name__ == "__main__":
+    base_folder = input("Enter the full path to your music root folder: ").strip()
+    namer = NameAlbumFromFolders(base_folder)
+    namer.run()

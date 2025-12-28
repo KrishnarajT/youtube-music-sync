@@ -79,6 +79,11 @@ class WhisperLyricsEngine:
             logger.warning(f"Audio file not found: {audio_path}")
             return None
 
+        # Verify file is audio format (mp3 or opus)
+        if audio_path.suffix.lower() not in [".mp3", ".opus"]:
+            logger.warning(f"Unsupported audio format: {audio_path.suffix}")
+            return None
+
         logger.info(f"Generating LRC lyrics for: {audio_path.name}")
         wav_path = self._to_wav(audio_path)
         vtt_path = audio_path.with_suffix(".vtt")
