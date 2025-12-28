@@ -144,7 +144,7 @@ class DownloadEngine:
         logger.info(f"Downloading cover image for playlist: {clean_title}")
         self.download_cover_image(playlist_info, dest_dir)
 
-        archive_file = "download_archive.txt"
+        archive_file = self.config.root_path / "download_archive.txt"
 
         # Build the command
         cmd = [
