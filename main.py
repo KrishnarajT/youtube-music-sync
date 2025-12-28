@@ -86,7 +86,12 @@ class YouTubeApp:
         fail_count = 0
 
         for i, p in enumerate(playlists, 1):
-            logger.info(f"[{i}/{len(playlists)}] Checking for updates: {p['title']}")
+            playlist_id = p["id"]
+            playlist_title = p["title"]
+
+            logger.info(
+                f"[{i}/{len(playlists)}] Checking for updates: {playlist_title}"
+            )
 
             try:
                 # DownloadEngine handles skipping existing files via download_archive.txt
@@ -95,37 +100,58 @@ class YouTubeApp:
                 if success:
                     # Whisper lyrics fallback for any new songs
                     playlist_dir = self.config.root_path / self.engine.clean_filename(
-                        p["title"]
+                        playlist_title
                     )
-                    for audio_file in playlist_dir.glob("*.mp3"):
-                        lrc_file = audio_file.with_suffix(".lrc")
-                        if not lrc_file.exists():
-                            try:
-                                self.lyrics_engine.generate_lrc(audio_file)
-                                logger.info(f"Lyrics generated for {audio_file.name}")
-                            except Exception as e:
-                                logger.warning(
-                                    f"Failed lyrics for {audio_file.name}: {e}"
-                                )
 
+                    # Check both .opus and .mp3 files for lyrics
+                    audio_extensions = ["*.mp3", "*.opus"]
+                    for ext in audio_extensions:
+                        for audio_file in playlist_dir.glob(ext):
+                            lrc_file = audio_file.with_suffix(".lrc")
+                            if not lrc_file.exists():
+                                try:
+                                    logger.info(
+                                        f"Generating lyrics for: {audio_file.name}"
+                                    )
+                                    self.lyrics_engine.generate_lrc(audio_file)
+                                    logger.info(
+                                        f"✓ Lyrics generated for {audio_file.name}"
+                                    )
+                                except Exception as e:
+                                    logger.warning(
+                                        f"Failed lyrics for {audio_file.name}: {e}"
+                                    )
+
+                    # Run album naming for this specific playlist
+                    logger.info(f"Running album naming for: {playlist_title}")
+                    try:
+                        from name_album_from_folders import NameAlbumFromFolders
+
+                        namer = NameAlbumFromFolders(playlist_dir)
+                        namer.run()
+                        logger.info(f"✓ Album naming completed for: {playlist_title}")
+                    except ImportError:
+                        logger.warning("name_album_from_folders module not found")
+                    except Exception as e:
+                        logger.warning(f"Album naming failed for {playlist_title}: {e}")
+
+                    # Mark playlist as completed after successful download
+                    self.state.mark_completed(playlist_id)
+                    logger.info(f"✓ Marked playlist as completed: {playlist_title}")
                     success_count += 1
                 else:
+                    logger.warning(f"✗ Download failed for: {playlist_title}")
                     fail_count += 1
 
             except Exception as e:
                 logger.error(
-                    f"Exception during sync of {p['title']}: {e}", exc_info=True
+                    f"Exception during sync of {playlist_title}: {e}", exc_info=True
                 )
                 fail_count += 1
 
         logger.info(
-            f"Sync Cycle Finished! Successful/Up-to-date: {success_count}, Failed: {fail_count}"
+            f"Sync Cycle Finished! Successful: {success_count}, Failed: {fail_count}"
         )
-
-        # Run album naming script on all downloaded files
-        logger.info("Starting album naming process...")
-        self.run_album_naming()
-        logger.info("Album naming process completed")
 
     def run_forever(self):
         """Runs the sync every 12 hours."""
