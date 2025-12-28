@@ -13,17 +13,49 @@ spec:
         app: youtube-music-sync
     spec:
       containers:
-        - name: app
+        # -----------------------------
+        # Background sync container
+        # -----------------------------
+        - name: sync-worker
           image: ghcr.io/krishnarajt/youtube-music-sync:git-a4d22d058dd20e224e144fc0fec90920a17eee43
           imagePullPolicy: IfNotPresent
+          command: ["python", "main.py"]
 
-          command: ["streamlit", "run", "dashboard.py"]
-          
           envFrom:
             - secretRef:
                 name: youtube-music-sync-env
 
           volumeMounts:
+            - name: downloads
+              mountPath: /downloads
+
+            - name: app-config
+              mountPath: /app/config.yml
+              subPath: config.yml
+
+            - name: playlists-config
+              mountPath: /app/playlists.txt
+              subPath: playlists.txt
+
+        # -----------------------------
+        # Streamlit dashboard container
+        # -----------------------------
+        - name: dashboard
+          image: ghcr.io/krishnarajt/youtube-music-sync:git-a4d22d058dd20e224e144fc0fec90920a17eee43
+          imagePullPolicy: IfNotPresent
+          command: ["streamlit", "run", "dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+          envFrom:
+            - secretRef:
+                name: youtube-music-sync-env
+
+          ports:
+            - containerPort: 8501
+
+          volumeMounts:
+            - name: downloads
+              mountPath: /downloads
+
             - name: app-config
               mountPath: /app/config.yml
               subPath: config.yml
@@ -34,6 +66,10 @@ spec:
 
 
       volumes:
+        - name: downloads
+          persistentVolumeClaim:
+            claimName: youtube-music-sync-downloads
+
         - name: app-config
           configMap:
             name: app-config
