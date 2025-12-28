@@ -13,11 +13,8 @@ spec:
         app: youtube-music-sync
     spec:
       containers:
-        # -----------------------------
-        # Background sync container
-        # -----------------------------
-        - name: sync-worker
-          image: ghcr.io/krishnarajt/youtube-music-sync:git-a4d22d058dd20e224e144fc0fec90920a17eee43
+        - name: app
+          image: ghcr.io/krishnarajt/youtube-music-sync:git-90a5777e1e2e51a60a00f372ca33338fb85c6e19
           imagePullPolicy: IfNotPresent
           command: ["python", "main.py"]
 
