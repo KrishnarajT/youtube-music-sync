@@ -8,6 +8,7 @@ from src.PlaylistResolver import PlaylistResolver
 from src.DownloadEngine import DownloadEngine
 from src.WhisperLyricsEngine import WhisperLyricsEngine
 from src.logging_utils import get_logger
+from utils.name_album_from_folders import NameAlbumFromFolders
 
 logger = get_logger(__name__)
 
@@ -41,7 +42,7 @@ class YouTubeApp:
         This automatically tags all MP3 files with proper album/artist metadata.
         """
         try:
-            from name_album_from_folders import NameAlbumFromFolders
+            from utils.name_album_from_folders import NameAlbumFromFolders
 
             logger.info(f"Running album naming on: {self.config.root_path}")
             namer = NameAlbumFromFolders(self.config.root_path)
@@ -125,8 +126,6 @@ class YouTubeApp:
                     # Run album naming for this specific playlist
                     logger.info(f"Running album naming for: {playlist_title}")
                     try:
-                        from name_album_from_folders import NameAlbumFromFolders
-
                         namer = NameAlbumFromFolders(playlist_dir)
                         namer.run()
                         logger.info(f"✓ Album naming completed for: {playlist_title}")
